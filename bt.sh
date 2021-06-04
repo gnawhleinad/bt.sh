@@ -22,14 +22,14 @@ export -f bt_sample_cpu_idle
 # times.
 #
 bt_init () {
-  if [ -z "$BT_INIT" ]; then
+  if [ -z "${BT_INIT+x}" ]; then
     export BT_INIT="$(basename ${BASH_SOURCE[1]} 2>/dev/null):${BASH_LINENO[0]}"
     rm -f "/tmp/bt.${BT_ID}.*"
     date '+%s%N' > "/tmp/bt.${BT_ID}.START"
 
     # only trace CPU if mpstat seems to be available
     touch "/tmp/bt.${BT_ID}.CPU"
-    if [ -z "$BT_DISABLE_CPUSAMPLE" ]; then
+    if [ -z "${BT_DISABLE_CPUSAMPLE+x}" ]; then
       # need both mpstat and bc for this to work
       if type mpstat >/dev/null 2>&1 && type bc >/dev/null 2>&1; then
         bash -c "bt_sample_cpu_idle" &
@@ -44,15 +44,15 @@ bt_cleanup () {
   local caller="$(basename ${BASH_SOURCE[1]} 2>/dev/null):${BASH_LINENO[0]}"
   local caller_file="${caller%%:*}"
   if [ "$init_file" = "$caller_file" ]; then
-    if [ -n "$BT_CPUSAMPLE_PID" ]; then
+    if [ -n "${BT_CPUSAMPLE_PID+x}" ]; then
       kill $BT_CPUSAMPLE_PID
       wait $BT_CPUSAMPLE_PID 2>/dev/null || true
     fi
     date '+%s%N' > "/tmp/bt.${BT_ID}.END"
-    if [ -z "$BT_DISABLED" -o "$BT_DISABLED" = "0" ]; then bt_report; fi
+    if [ -z "${BT_DISABLED+x}" -o "${BT_DISABLED+x}" = "0" ]; then bt_report; fi
 
     # clean up in the usual case, but make it easy to debug saved stats
-    if [ -z "$BT_DEBUG" ]; then rm -f "/tmp/bt.${BT_ID}.*" 2>/dev/null; fi
+    if [ -z "${BT_DEBUG+x}" ]; then rm -f "/tmp/bt.${BT_ID}.*" 2>/dev/null; fi
     export BT_INIT=""
   fi
 }
@@ -81,7 +81,7 @@ bt_enable () {
 # Requires a balanced bt_end with matching description text.
 #
 bt_start () {
-  if [ -z "$BT_DISABLED" -o "$BT_DISABLED" = "0" ]; then
+  if [ -z "${BT_DISABLED+x}" -o "${BT_DISABLED+x}" = "0" ]; then
     local caller="$(basename ${BASH_SOURCE[1]} 2>/dev/null):${BASH_LINENO[0]}"
     local desc_checksum=$(echo "$@" | cksum | awk '{print $1}')
     local timestamp=$(date '+%s%N')
@@ -100,7 +100,7 @@ bt_start_log () {
 }
 
 bt_end () {
-  if [ -z "$BT_DISABLED" -o "$BT_DISABLED" = "0" ]; then
+  if [ -z "${BT_DISABLED+x}" -o "${BT_DISABLED+x}" = "0" ]; then
     local caller="$(basename ${BASH_SOURCE[1]} 2>/dev/null):${BASH_LINENO[0]}"
     local desc_checksum=$(echo "$@" | cksum | awk '{print $1}')
     echo "$(date '+%s%N') $caller $1" >> "/tmp/bt.${BT_ID}.$desc_checksum"
@@ -117,7 +117,9 @@ bt_end_log () {
 # https://github.com/holman/spark
 # $1 - The data we'd like to graph.
 _echo () {
-  if [ "X$1" = "X-n" ]; then
+  if [ -z "${1+x}" ]; then
+    printf "%s\n" "$*"
+  elif [ "X$1" = "X-n" ]; then
     shift
     printf "%s" "$*"
   else
@@ -204,7 +206,7 @@ bt_report () {
   (
   set -e
   set +x
-  if [ -n "$BT_DEBUG" ]; then
+  if [ -n "${BT_DEBUG+x}" ]; then
     set -x
   fi
 
@@ -224,7 +226,7 @@ bt_report () {
 
   printf "Build Trace Start ($BT_INIT)\n\n"
 
-  if [ -n "$BT_CPUSAMPLE_PID" ]; then
+  if [ -n "${BT_CPUSAMPLE_PID+x}" ]; then
     bt_compute_cpu_sparkline
     printf "%14s%s * CPU Utilization\n" " " "$bt_sparkline"
   fi
@@ -276,7 +278,7 @@ bt_report () {
     fi
 
     # omit small measurements by default
-    if [ -z "$BT_SMALLSTATS" -a "$m_bar" = "." ]; then
+    if [ -z "${BT_SMALLSTATS+x}" -a "$m_bar" = "." ]; then
       continue
     fi
 
