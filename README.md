@@ -95,6 +95,7 @@ It depends on these utilities:
  * mpstat (sysstat package)
  * GNU bc (math package)
  * POSIX: awk, tail, sed, basename, head
+ * uuidgen
 
 ## License
 
